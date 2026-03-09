@@ -4,7 +4,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static('./'));
 
 // UptimeRobot用（スリープ防止）
 app.get('/health', (req, res) => res.status(200).send('OK'));
@@ -22,5 +22,6 @@ app.post('/api/chat', async (req, res) => {
         res.status(500).json({ error: '通信エラーが発生しました' });
     }
 });
+
 
 app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
