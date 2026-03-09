@@ -1,0 +1,13 @@
+{
+  "name": "ai-priest-v3-1",
+  "version": "1.0.0",
+  "description": "AI Dialogue with Gemini 3.1 Flash-Lite",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "axios": "^1.6.0"
+  }
+}
