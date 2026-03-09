@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>なぜ「平和」を願うほど憎くなるのか？</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=BIZ+UDGothic:wght@400;700&family=BIZ+UDMincho&display=swap" rel="stylesheet">
+    <style>
+        /* ベーススタイル - ライトモード */
+        body { font-family: 'BIZ UDGothic', sans-serif; background-color: #f5f5f4; color: #1c1917; }
+        input, textarea, button, select { font-family: inherit; font-size: inherit; color: #1c1917; }
+        h1, h2, h3, h4, .font-mincho { font-family: 'BIZ UDMincho', serif; }
+        rt { font-size: 0.6em; color: #57534e; }
+        .message-bubble-container { position: relative; }
+        .menu-btn { position: absolute; bottom: -8px; opacity: 0; transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out; transform: scale(0.9); cursor: pointer; }
+        .message-bubble-container:hover .menu-btn { opacity: 1; transform: scale(1); }
+        .menu-btn-left { left: 55px; }
+        .menu-btn-right { right: 55px; }
+        .menu-btn-center { left: 50%; transform: translateX(-50%) scale(0.9); }
+        .message-bubble-container:hover .menu-btn-center { transform: translateX(-50%) scale(1); }
+        .canvas-bg { background-color: #ffffff; border-color: #a8a29e; }
+        .control-button { transition: all 0.2s ease-in-out; }
+        .control-button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .participant-card { color: #1c1917; border-radius: 0.5rem; text-align: center; transition: all 0.3s ease-in-out; display: flex; flex-direction: column; justify-content: flex-start; height: 100%; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        .header-card, .settings-card { background-color: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); border-color: #a8a29e; color: #1c1917; }
+        .modal-content { background-color: #ffffff; color: #1c1917; border: 1px solid #a8a29e; }
+        .narration { font-style: italic; color: #57534e; }
+        .typing-indicator span { animation: blink 1.4s infinite both; height: 6px; width: 6px; background-color: #78716c; border-radius: 50%; display: inline-block; margin: 0 1px; }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes blink { 0% { opacity: 0.2; transform: scale(0.8); } 20% { opacity: 1; transform: scale(1); } 100% { opacity: 0.2; transform: scale(0.8); } }
+        @keyframes attention-shake { 0%, 100% { transform: scale(1.05) rotate(0deg); } 10%, 30%, 50%, 70%, 90% { transform: scale(1.05) rotate(-2deg); } 20%, 40%, 60%, 80% { transform: scale(1.05) rotate(2deg); } }
+        .attention-animation { animation: attention-shake 2s ease-in-out infinite; }
+    </style>
+</head>
+<body class="w-full h-screen bg-stone-100">
+
+    <div id="notification-container" class="fixed top-5 right-5 z-[100]"></div>
+
+    <div class="container mx-auto max-w-5xl h-screen flex flex-col p-4">
+        <header class="text-center mb-4">
+            <div class="py-4 header-card rounded-xl shadow-lg border border-stone-300">
+                <h1 id="app-title" class="text-xl md:text-2xl lg:text-3xl font-bold text-stone-900 font-mincho tracking-tight px-2 leading-tight"></h1>
+                <p id="app-subtitle" class="text-stone-600 mt-2 text-xs md:text-sm px-4 font-mincho font-bold"></p>
+            </div>
+        </header>
+
+        <div id="settings-area" class="relative mb-4 p-4 settings-card rounded-xl shadow border border-stone-200">
+            <div class="text-center mb-6 max-w-2xl mx-auto">
+                <h4 id="theme-heading" class="text-lg font-bold text-stone-800 font-mincho tracking-wider mb-3"></h4>
+                <div id="theme-category-buttons" class="flex flex-wrap justify-center gap-3 mb-6"></div>
+                <textarea id="theme-free-text" class="w-full p-3 border-2 border-stone-300 rounded-lg shadow-sm focus:ring-stone-700 focus:border-stone-700 bg-white text-gray-900 text-base" rows="3"></textarea>
+                <p id="theme-empty-note" class="text-amber-800 font-bold mt-2 text-sm font-mincho"></p>
+            </div>
+            <div class="mb-6">
+                 <div id="main-participants-container" class="grid grid-cols-1 md:grid-cols-3 items-stretch justify-center gap-4 max-w-4xl mx-auto"></div>
+                <div id="moderator-participant-container" class="mt-6"></div>
+            </div>
+            <div class="flex items-center justify-center mt-4">
+                <button id="start-btn" class="control-button bg-stone-800 hover:bg-black text-white font-bold py-4 px-12 text-xl rounded-full shadow-lg transform transition hover:scale-105 ring-4 ring-stone-200 ring-offset-2 ring-offset-stone-100 font-mincho"></button>
+            </div>
+        </div>
+
+        <main class="flex-grow canvas-bg rounded-xl shadow-inner flex flex-col overflow-hidden border border-stone-300">
+            <div id="chat-window" class="flex-grow p-4 overflow-y-auto space-y-4">
+                <div id="initial-message" class="text-center text-gray-500 p-4"></div>
+            </div>
+            <div id="active-controls" class="hidden p-2 bg-white/90 backdrop-blur-sm border-t border-stone-200">
+                <div class="flex items-center justify-center flex-wrap gap-2">
+                    <button id="resume-btn" class="control-button bg-teal-700 hover:bg-teal-800 text-white font-bold py-2 px-6 text-sm rounded-full shadow-lg transform transition hover:scale-105 ring-2 ring-teal-300 ring-offset-1 ring-offset-white"></button>
+                    <button id="stop-btn" class="control-button bg-gray-700 hover:bg-gray-800 text-white font-bold py-1.5 px-3 text-xs rounded-full shadow-md"></button>
+                    <button id="summarize-btn" class="control-button bg-indigo-800 hover:bg-indigo-900 text-white font-bold py-1.5 px-3 text-xs rounded-full shadow-md" disabled></button>
+                    <button id="reset-btn" class="control-button bg-gray-500 hover:bg-gray-600 text-white font-bold py-1.5 px-3 text-xs rounded-full shadow-md"></button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="summary-modal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
+        <div class="modal-content rounded-lg shadow-xl w-full max-w-2xl p-6 relative max-h-[80vh] flex flex-col border border-indigo-200">
+            <h3 id="summary-modal-title" class="text-xl font-bold mb-4 font-mincho text-indigo-900"></h3>
+            <button id="close-summary-modal-btn" class="absolute top-4 right-4 modal-close-btn text-2xl font-bold text-gray-400 hover:text-gray-600">&times;</button>
+            <div id="summary-content" class="text-sm space-y-4 overflow-y-auto whitespace-pre-wrap text-gray-700"></div>
+        </div>
+    </div>
+    <script>
+        /* --- 修正された callGemini 関数 --- */
+        async function callGemini(history, systemInstructionText) {
+            // APIキーはサーバー側で管理するため、ここでは不要です
+            const apiUrl = `/api/chat`; 
+            const payload = {
+                contents: history,
+                systemInstruction: { parts: [{ text: systemInstructionText }] },
+                generationConfig: { temperature: 0.9, topP: 0.95 }
+            };
+            
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) throw new Error(`API Error: ${response.status}`);
+                
+                const result = await response.json();
+                if (result.candidates && result.candidates[0].content?.parts?.[0]?.text) {
+                    return result.candidates[0].content.parts[0].text;
+                }
+                throw new Error("Empty response");
+            } catch (error) {
+                console.error("Fetch error:", error);
+                return null;
+            }
+        }
+
+        /* --- 以降はオリジナルのロジックを維持 --- */
+        // ... (省略: 前述のDOM設定やデータマップ、ダイアログ制御ロジックをそのまま貼り付けてください) ...
