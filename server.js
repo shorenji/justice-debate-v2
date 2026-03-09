@@ -6,16 +6,15 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static(__dirname + '/'));
 
-// UptimeRobot用（スリープ防止）
-app.get('/health', (req, res) => res.status(200).send('OK'));
-
 app.post('/chat', async (req, res) => {
     try {
         const apiKey = process.env.GEMINI_API_KEY;
-        // 最新の Gemini 3.1 Flash-Lite を指定
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`;
-        
-        const response = await axios.post(apiUrl, req.body);
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+
+        // データの送り方をGeminiの最新仕様に完全に合わせます
+        const response = await axios.post(apiUrl, {
+            contents: [{ parts: [{ text: req.body.prompt }] }]
+        });
         res.json(response.data);
     } catch (error) {
         console.error('API Error:', error.response ? error.response.data : error.message);
@@ -23,8 +22,4 @@ app.post('/chat', async (req, res) => {
     }
 });
 
-
-app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
-
-
-
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
