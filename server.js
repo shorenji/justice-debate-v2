@@ -9,7 +9,7 @@ app.use(express.static(__dirname + '/'));
 // UptimeRobot用（スリープ防止）
 app.get('/health', (req, res) => res.status(200).send('OK'));
 
-app.post('/api/chat', async (req, res) => {
+app.post('/chat', async (req, res) => {
     try {
         const apiKey = process.env.GEMINI_API_KEY;
         // 最新の Gemini 3.1 Flash-Lite を指定
@@ -25,5 +25,6 @@ app.post('/api/chat', async (req, res) => {
 
 
 app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
+
 
 
